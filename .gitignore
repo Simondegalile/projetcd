@@ -1,1 +1,24 @@
-.vscode
+# Fichiers objets
+*.o
+*.obj
+
+# Exécutables
+bigbinary
+bigbinary.exe
+
+# Fichiers de débogage
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Fichiers générés par l'IDE
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+
+# Fichiers temporaires
+*.tmp
+*.log

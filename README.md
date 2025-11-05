@@ -1,17 +1,131 @@
-# Projet BigBinary - Calcul sur des entiers en précision arbitraire
+# Projet BigBinary - Algorithme Binaire de Calcul du PGCD
 
 ## Description
 
-Ce projet implémente une bibliothèque en C pour la manipulation de grands entiers en **binaire** (représentation en base 2). Il permet d'effectuer des opérations arithmétiques sur des nombres qui ne peuvent pas être représentés exactement sur 32 ou 64 bits standard.
+Ce projet implémente une bibliothèque en langage C pour la manipulation de **grands entiers en binaire** (BigBinary). Il permet d'effectuer des opérations arithmétiques sur des entiers de taille arbitraire, dépassant les limites des types natifs du C (32 ou 64 bits).
 
-Ce projet est basé sur l'algorithme binaire d'Euclide pour le calcul du PGCD (Plus Grand Commun Diviseur).
+Le projet culmine avec l'implémentation de l'**algorithme binaire d'Euclide** pour le calcul du PGCD et une version simplifiée du **chiffrement RSA**.
 
-## Fichiers du projet
+## Structure du Projet
 
-- **bigbinary.h** : Fichier d'en-tête contenant la structure `BigBinary` et les déclarations des fonctions
-- **bigbinary.c** : Implémentation des fonctions de manipulation des grands entiers binaires
-- **main.c** : Programme de test démontrant l'utilisation de la bibliothèque
-- **Makefile** : Fichier de compilation automatique
+```
+projetcd/
+├── bigbinary.h        # Fichier d'en-tête avec les déclarations
+├── bigbinary.c        # Implémentation des fonctions BigBinary
+├── main.c             # Programme de test
+├── Makefile           # Fichier de compilation
+└── README.md          # Ce fichier
+```
+
+## Fonctionnalités
+
+### Phase 1 : Opérations de Base
+- ✅ Initialisation et gestion mémoire des BigBinary
+- ✅ Addition de grands entiers binaires
+- ✅ Soustraction de grands entiers binaires (A ≥ B)
+- ✅ Comparaisons : égalité, inférieur, supérieur
+- ✅ Affichage en binaire
+
+### Phase 2 : Opérations Avancées
+- ✅ Division et multiplication par 2 (décalage de bits)
+- ✅ **Algorithme Binaire d'Euclide** pour le calcul du PGCD
+  - Utilise uniquement des additions, soustractions et décalages
+  - Pas de division euclidienne nécessaire
+- ✅ Calcul du modulo
+- ✅ Exponentiation modulaire rapide
+
+### Phase 3 : RSA Simplifié (Bonus)
+- ✅ Chiffrement RSA : C = M^e mod N
+- ✅ Déchiffrement RSA : M = C^d mod N
+
+## Compilation et Exécution
+
+### Compilation
+```bash
+make
+```
+
+### Exécution
+```bash
+make run
+```
+ou directement :
+```bash
+./bigbinary
+```
+
+### Nettoyage
+```bash
+make clean
+```
+
+## Utilisation de la Bibliothèque
+
+### Exemple de Base
+
+```c
+#include "bigbinary.h"
+
+int main() {
+    // Création de nombres binaires
+    BigBinary a = creerBigBinaryDepuisChaine("1010");  // 10 en décimal
+    BigBinary b = creerBigBinaryDepuisChaine("110");   // 6 en décimal
+    
+    // Addition
+    BigBinary somme = Addition(a, b);
+    printf("Résultat: ");
+    afficheBigBinary(somme);  // Affiche: 10000 (16 en décimal)
+    
+    // Libération mémoire
+    libereBigBinary(&a);
+    libereBigBinary(&b);
+    libereBigBinary(&somme);
+    
+    return 0;
+}
+```
+
+### Calcul du PGCD
+
+```c
+// Exemple du document: PGCD(51, 57) = 3
+BigBinary a = creerBigBinaryDepuisChaine("110011");  // 51
+BigBinary b = creerBigBinaryDepuisChaine("111001");  // 57
+
+BigBinary pgcd = PGCD(a, b);
+afficheBigBinary(pgcd);  // Affiche: 11 (3 en décimal)
+
+libereBigBinary(&a);
+libereBigBinary(&b);
+libereBigBinary(&pgcd);
+```
+
+### Exponentiation Modulaire et RSA
+
+```c
+// Chiffrement RSA simplifié
+BigBinary message = creerBigBinaryDepuisChaine("1010");      // Message: 10
+BigBinary e = creerBigBinaryDepuisChaine("111");             // e = 7
+BigBinary n = creerBigBinaryDepuisChaine("10001111");        // n = 143
+
+BigBinary chiffre = RSA_encrypt(message, e, n);
+printf("Message chiffré: ");
+afficheBigBinary(chiffre);
+
+// Déchiffrement
+BigBinary d = creerBigBinaryDepuisChaine("1100111");         // d = 103
+BigBinary dechiffre = RSA_decrypt(chiffre, d, n);
+printf("Message déchiffré: ");
+afficheBigBinary(dechiffre);
+
+// Libération mémoire
+libereBigBinary(&message);
+libereBigBinary(&e);
+libereBigBinary(&n);
+libereBigBinary(&d);
+libereBigBinary(&chiffre);
+libereBigBinary(&dechiffre);
+```
 
 ## Structure BigBinary
 
@@ -23,103 +137,46 @@ typedef struct {
 } BigBinary;
 ```
 
-## Fonctionnalités - Phase 1 ✅
+### Convention de Stockage
+- `Tdigits[0]` : bit de poids fort (MSB - Most Significant Bit)
+- `Tdigits[Taille-1]` : bit de poids faible (LSB - Least Significant Bit)
 
-### Fonctions de base
-- `createBigBinary(int size)` : Crée un BigBinary vide
-- `initBigBinary(int taille, int signe)` : Initialise un BigBinary à zéro
-- `creerBigBinaryDepuisChaine(const char *chaine)` : Crée un BigBinary depuis une chaîne binaire (ex: "1010101")
-- `afficheBigBinary(BigBinary nb)` : Affiche un BigBinary
-- `libereBigBinary(BigBinary *nb)` : Libère la mémoire
-- `getNombreDigits(BigBinary nb)` : Retourne le nombre de bits
+Cette convention facilite les opérations de division par 2 (suppression du bit de poids faible).
 
-### Opérations arithmétiques
-- `BigBinary_Addition(BigBinary A, BigBinary B)` : Addition (algorithme naïf)
-- `BigBinary_Soustraction(BigBinary A, BigBinary B)` : Soustraction (avec A ≥ B)
+## Algorithme Binaire d'Euclide
 
-### Fonctions de comparaison
-- `Egal(BigBinary A, BigBinary B)` : Teste l'égalité
-- `Inferieur(BigBinary A, BigBinary B)` : Teste si A < B
+L'algorithme binaire d'Euclide calcule le PGCD de deux entiers sans utiliser la division euclidienne, en exploitant les propriétés suivantes :
 
-## Compilation
+| Condition | Formule |
+|-----------|---------|
+| a pair et b pair | PGCD(a, b) = 2 × PGCD(a/2, b/2) |
+| a pair et b impair | PGCD(a, b) = PGCD(a/2, b) |
+| a impair et b pair | PGCD(a, b) = PGCD(a, b/2) |
+| a et b impairs | PGCD(a, b) = PGCD(a - b, b) |
+| b = 0 | PGCD(a, 0) = a |
 
-### Avec GCC (Linux/MinGW)
-```bash
-make
-```
+En binaire, la division par 2 devient un simple décalage de bits, ce qui rend cet algorithme particulièrement efficace pour les processeurs.
 
-### Compilation manuelle
-```bash
-gcc -o bigbinary_test main.c bigbinary.c -Wall -I.
-```
+## Tests Inclus
 
-### Avec MSVC (Windows)
-```cmd
-cl /Fe:bigbinary_test.exe main.c bigbinary.c
-```
+Le programme `main.c` contient une suite de tests complète :
 
-## Utilisation
-
-```bash
-./bigbinary_test
-```
-
-## Exemple d'utilisation
-
-```c
-#include "bigbinary.h"
-
-int main() {
-    // Création de nombres binaires
-    BigBinary a = creerBigBinaryDepuisChaine("110011");  // 51 en décimal
-    BigBinary b = creerBigBinaryDepuisChaine("111001");  // 57 en décimal
-
-    // Addition
-    BigBinary somme = BigBinary_Addition(a, b);
-    printf("Somme = ");
-    afficheBigBinary(somme);
-
-    // Libération mémoire
-    libereBigBinary(&a);
-    libereBigBinary(&b);
-    libereBigBinary(&somme);
-
-    return 0;
-}
-```
-
-## Phase 2 (À venir)
-
-- Calcul du PGCD avec l'algorithme binaire d'Euclide
-- Calcul du modulo
-- Exponentiation rapide modulaire
-
-## Phase 3 (Bonus)
-
-- Chiffrement RSA
-- Déchiffrement RSA
-
-## Notes importantes
-
-⚠️ **Convention de stockage des bits** : Les bits sont stockés avec le MSB (Most Significant Bit) à gauche :
-- `Tdigits[0]` = bit de poids fort
-- `Tdigits[Taille-1]` = bit de poids faible
-
-⚠️ **Règles scanf/printf** :
-1. Pendant le développement : vous pouvez faire absolument TOUT CE QUE VOUS VOULEZ
-2. Pour le code "rendu" : votre code devra faire EXACTEMENT CE QUI SERA DEMANDÉ (ni plus ni moins)
+1. **Tests Phase 1** : Addition, soustraction, comparaisons
+2. **Tests Phase 2** : Division/multiplication par 2, PGCD, modulo, exponentiation modulaire
+3. **Tests Phase 3** : Chiffrement et déchiffrement RSA
+4. **Tests avec grands nombres** : Nombres de 90+ bits
 
 ## Références
 
-- [Algorithme d'Euclide - Wikipedia](https://fr.wikipedia.org/wiki/Algorithme_d%27Euclide)
-- [Algorithme binaire d'Euclide - Wikipedia](https://fr.wikipedia.org/wiki/Algorithme_binaire_de_calcul_du_PGCD)
-- [Division algorithm - Wikipedia](https://en.wikipedia.org/wiki/Division_algorithm)
+1. [Algorithme d'Euclide - Wikipedia](https://fr.wikipedia.org/wiki/Algorithme_d%27Euclide)
+2. [Algorithme Binaire d'Euclide - Wikipedia](https://fr.wikipedia.org/wiki/Algorithme_binaire_de_calcul_du_PGCD)
+3. Donald E. Knuth, *The Art of Computer Programming*
 
 ## Auteur
 
-Projet réalisé dans le cadre du cours "Langage C - PROJET S5" à l'ESIEA (3A S5 FISA/FISE)
-Année Académique : 2025-2026
+Projet ESIEA 3ème Année - Language C
+Année Académique 2025-2026
 
 ## Licence
 
-Ce projet est à but éducatif.
+Ce projet est à usage éducatif dans le cadre du cours de Language C de l'ESIEA.
