@@ -321,10 +321,15 @@ BigBinary MultiplicationEgyptienne(BigBinary A, BigBinary B) {
 
 // Calcul du PGCD par l'algorithme binaire d'Euclide
 BigBinary PGCD(BigBinary A, BigBinary B) {
+    // Si A == B, retourner A immediatement
+    if (Egal(A, B)) {
+        return copieBigBinary(A);
+    }
+
     // Créer des copies pour ne pas modifier les originaux
     BigBinary a = copieBigBinary(A);
     BigBinary b = copieBigBinary(B);
-    
+
     // PGCD(a, 0) = a
     if (estNul(b)) {
         libereBigBinary(&b);
@@ -334,17 +339,17 @@ BigBinary PGCD(BigBinary A, BigBinary B) {
         libereBigBinary(&a);
         return b;
     }
-    
+
     // Compteur pour les facteurs de 2
     int facteur2 = 0;
-    
+
     // Tant que a et b sont pairs, diviser par 2 et compter
     while (estPair(a) && estPair(b)) {
         divisePar2(&a);
         divisePar2(&b);
         facteur2++;
     }
-    
+
     // Algorithme binaire d'Euclide
     while (!Egal(a, b)) {
         if (estPair(a)) {
@@ -366,7 +371,7 @@ BigBinary PGCD(BigBinary A, BigBinary B) {
             }
         }
     }
-    
+
     // Multiplier le résultat par 2^facteur2
     BigBinary resultat = a;
     for (int i = 0; i < facteur2; ++i) {
@@ -374,7 +379,7 @@ BigBinary PGCD(BigBinary A, BigBinary B) {
         libereBigBinary(&resultat);
         resultat = temp;
     }
-    
+
     libereBigBinary(&b);
     return resultat;
 }
@@ -385,45 +390,45 @@ BigBinary PGCD(BigBinary A, BigBinary B) {
 // où k est le plus grand entier tel que A - 2^k * B >= 0
 BigBinary Modulo(BigBinary A, BigBinary B) {
     if (estNul(B)) {
-        printf("Erreur: Division par zéro\n");
+        fprintf(stderr, "Erreur: Division par zéro dans Modulo\n");
         return creerZero();
     }
-    
+
     // Si A < B alors A mod B = A
     if (Inferieur(A, B)) {
         return copieBigBinary(A);
     }
-    
+
     // Si A == B alors A mod B = 0
     if (Egal(A, B)) {
         return creerZero();
     }
-    
+
     // Algorithme division-free mod
     BigBinary reste = copieBigBinary(A);
-    
+
     // Boucle principale : tant que reste >= B
     while (!Inferieur(reste, B)) {
         // Trouver le plus grand k tel que reste >= 2^k * B
         BigBinary B_decale = copieBigBinary(B);
         int k = 0;
-        
+
         // On décale B à gauche jusqu'à ce que 2^(k+1) * B > reste
         while (true) {
             BigBinary B_double = multiplePar2(B_decale);
-            
+
             // Si 2^(k+1) * B > reste, on s'arrête
             if (Superieur(B_double, reste)) {
                 libereBigBinary(&B_double);
                 break;
             }
-            
+
             // Sinon, on continue avec 2^(k+1) * B
             libereBigBinary(&B_decale);
             B_decale = B_double;
             k++;
         }
-        
+
         // Maintenant, on a 2^k * B <= reste < 2^(k+1) * B
         // On soustrait 2^k * B de reste
         BigBinary nouveau_reste = Soustraction(reste, B_decale);
@@ -431,7 +436,7 @@ BigBinary Modulo(BigBinary A, BigBinary B) {
         libereBigBinary(&B_decale);
         reste = nouveau_reste;
     }
-    
+
     return reste;
 }
 
@@ -442,36 +447,71 @@ BigBinary ExpMod(BigBinary M, BigBinary exp, BigBinary n) {
         BigBinary un = creerBigBinaryDepuisChaine("1");
         return un;
     }
-    
+
     // Résultat initialisé à 1
     BigBinary resultat = creerBigBinaryDepuisChaine("1");
     BigBinary base = Modulo(M, n);  // M mod n
     BigBinary exposant = copieBigBinary(exp);
-    
+
     // Algorithme d'exponentiation rapide (binary exponentiation)
     while (!estNul(exposant)) {
         // Si le bit de poids faible de l'exposant est 1
         if (exposant.Tdigits[exposant.Taille - 1] == 1) {
             // resultat = (resultat * base) mod n
-            // Comme on n'a pas de multiplication directe, on utilise l'addition répétée
-            // ou on implémente une multiplication
             BigBinary temp = multiplicationMod(resultat, base, n);
             libereBigBinary(&resultat);
             resultat = temp;
         }
-        
+
         // base = (base * base) mod n
         BigBinary temp = multiplicationMod(base, base, n);
         libereBigBinary(&base);
         base = temp;
-        
+
         // Diviser l'exposant par 2
         divisePar2(&exposant);
     }
-    
+
     libereBigBinary(&base);
     libereBigBinary(&exposant);
-    
+
+    return resultat;
+}
+
+// Exponentiation modulaire avec exposant unsigned int (pour e < 64 bits)
+// Version optimisée pour les petits exposants
+BigBinary ExpModInt(BigBinary M, unsigned int exp, BigBinary n) {
+    // Si l'exposant est 0, retourner 1
+    if (exp == 0) {
+        return creerBigBinaryDepuisChaine("1");
+    }
+
+    // Résultat initialisé à 1
+    BigBinary resultat = creerBigBinaryDepuisChaine("1");
+    BigBinary base = Modulo(M, n);  // M mod n
+
+    unsigned int e = exp;
+
+    // Algorithme d'exponentiation rapide (binary exponentiation)
+    while (e > 0) {
+        // Si le bit de poids faible de l'exposant est 1
+        if (e & 1) {
+            BigBinary temp = multiplicationMod(resultat, base, n);
+            libereBigBinary(&resultat);
+            resultat = temp;
+        }
+
+        // base = (base * base) mod n
+        BigBinary temp = multiplicationMod(base, base, n);
+        libereBigBinary(&base);
+        base = temp;
+
+        // Diviser l'exposant par 2 (shift right)
+        e >>= 1;
+    }
+
+    libereBigBinary(&base);
+
     return resultat;
 }
 
@@ -481,30 +521,16 @@ BigBinary multiplicationMod(BigBinary A, BigBinary B, BigBinary n) {
     if (estNul(A) || estNul(B)) {
         return creerZero();
     }
-    
-    BigBinary resultat = creerZero();
-    BigBinary temp_A = Modulo(A, n);
-    
-    // Parcourir chaque bit de B de droite à gauche
-    for (int i = B.Taille - 1; i >= 0; i--) {
-        if (B.Tdigits[i] == 1) {
-            // resultat = (resultat + temp_A) mod n
-            BigBinary somme = Addition(resultat, temp_A);
-            libereBigBinary(&resultat);
-            resultat = Modulo(somme, n);
-            libereBigBinary(&somme);
-        }
-        
-        if (i > 0) {
-            // temp_A = (temp_A * 2) mod n
-            BigBinary double_temp = multiplePar2(temp_A);
-            libereBigBinary(&temp_A);
-            temp_A = Modulo(double_temp, n);
-            libereBigBinary(&double_temp);
-        }
-    }
-    
-    libereBigBinary(&temp_A);
+
+    // Calculer le produit avec MultiplicationEgyptienne
+    BigBinary produit = MultiplicationEgyptienne(A, B);
+
+    // Appliquer le modulo au résultat
+    BigBinary resultat = Modulo(produit, n);
+
+    // Libérer la mémoire du produit intermédiaire
+    libereBigBinary(&produit);
+
     return resultat;
 }
 

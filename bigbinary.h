@@ -82,6 +82,9 @@ BigBinary Modulo(BigBinary A, BigBinary B);
 // exp est passé comme BigBinary mais peut être simplifié en int si < 64 bits
 BigBinary ExpMod(BigBinary M, BigBinary exp, BigBinary n);
 
+// Exponentiation modulaire avec exposant unsigned int (pour e < 64 bits)
+BigBinary ExpModInt(BigBinary M, unsigned int exp, BigBinary n);
+
 // Fonction auxiliaire pour la multiplication modulaire : (A * B) mod n
 BigBinary multiplicationMod(BigBinary A, BigBinary B, BigBinary n);
 

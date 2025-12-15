@@ -1,0 +1,10 @@
+{
+    "env": {
+        "ANTHROPIC_AUTH_TOKEN": "sk-kimi-gGPpvifXWzeHBIgpD4HpWcrMrTXxpNpkBI12TtadlAcz04ZNeM7hWbFo9qfJ1pkd",
+        "ANTHROPIC_BASE_URL": "https://api.kimi.com/coding/",
+        "ANTHROPIC_MODEL": "kimi-for-coding",
+        "API_TIMEOUT_MS": "3000000",
+        "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
+        "MAX_THINKING_TOKENS": "31999"
+    }
+}
