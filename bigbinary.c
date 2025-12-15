@@ -289,24 +289,26 @@ bool estNul(BigBinary nb) {
 // Multiplication Égyptienne : A * B
 // Principe : Pour multiplier A par B, on parcourt les bits de B
 // Si le bit i de B est 1, on ajoute A*(2^i) au résultat
+// On parcourt B du LSB (indice Taille-1) vers le MSB (indice 0)
 BigBinary MultiplicationEgyptienne(BigBinary A, BigBinary B) {
     if (estNul(A) || estNul(B)) {
         return creerZero();
     }
-    
+
     BigBinary resultat = creerZero();
     BigBinary multiplicande = copieBigBinary(A);  // A qu'on va doubler à chaque étape
-    
-    // Parcourir B de droite à gauche (du LSB au MSB)
+
+    // Parcourir B de gauche à droite dans le tableau (du LSB au MSB)
+    // Tdigits[0] = MSB, Tdigits[Taille-1] = LSB
     for (int i = B.Taille - 1; i >= 0; i--) {
-        // Si le bit actuel de B est 1
+        // Si le bit actuel de B (en partant du LSB) est 1
         if (B.Tdigits[i] == 1) {
             // Ajouter le multiplicande au résultat
             BigBinary temp = Addition(resultat, multiplicande);
             libereBigBinary(&resultat);
             resultat = temp;
         }
-        
+
         // Doubler le multiplicande pour la prochaine itération (sauf à la dernière)
         if (i > 0) {
             BigBinary temp = multiplePar2(multiplicande);
@@ -314,7 +316,7 @@ BigBinary MultiplicationEgyptienne(BigBinary A, BigBinary B) {
             multiplicande = temp;
         }
     }
-    
+
     libereBigBinary(&multiplicande);
     return resultat;
 }
@@ -515,22 +517,36 @@ BigBinary ExpModInt(BigBinary M, unsigned int exp, BigBinary n) {
     return resultat;
 }
 
-// Fonction auxiliaire: Multiplication de deux BigBinary avec modulo
-// A * B mod n (utilise la multiplication égyptienne)
+// Fonction auxiliaire: Multiplication modulaire optimisée pour les grands nombres
+// Calcule (A * B) mod n sans créer le produit intermédiaire complet
+// Utilise la multiplication égyptienne avec modulo à chaque étape
 BigBinary multiplicationMod(BigBinary A, BigBinary B, BigBinary n) {
     if (estNul(A) || estNul(B)) {
         return creerZero();
     }
 
-    // Calculer le produit avec MultiplicationEgyptienne
-    BigBinary produit = MultiplicationEgyptienne(A, B);
+    BigBinary resultat = creerZero();
+    BigBinary base = Modulo(A, n);  // Réduire A modulo n d'abord
 
-    // Appliquer le modulo au résultat
-    BigBinary resultat = Modulo(produit, n);
+    // Parcourir chaque bit de B
+    for (int i = B.Taille - 1; i >= 0; i--) {
+        // resultat = (resultat * 2) mod n
+        BigBinary temp = multiplePar2(resultat);
+        libereBigBinary(&resultat);
+        resultat = Modulo(temp, n);
+        libereBigBinary(&temp);
 
-    // Libérer la mémoire du produit intermédiaire
-    libereBigBinary(&produit);
+        // Si le bit actuel de B est 1
+        if (B.Tdigits[i] == 1) {
+            // resultat = (resultat + base) mod n
+            BigBinary somme = Addition(resultat, base);
+            libereBigBinary(&resultat);
+            resultat = Modulo(somme, n);
+            libereBigBinary(&somme);
+        }
+    }
 
+    libereBigBinary(&base);
     return resultat;
 }
 
