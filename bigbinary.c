@@ -411,9 +411,8 @@ BigBinary Modulo(BigBinary A, BigBinary B) {
 
     // Boucle principale : tant que reste >= B
     while (!Inferieur(reste, B)) {
-        // Trouver le plus grand k tel que reste >= 2^k * B
+        // Trouver le plus grand décalage tel que reste >= 2^k * B
         BigBinary B_decale = copieBigBinary(B);
-        int k = 0;
 
         // On décale B à gauche jusqu'à ce que 2^(k+1) * B > reste
         while (true) {
@@ -428,7 +427,6 @@ BigBinary Modulo(BigBinary A, BigBinary B) {
             // Sinon, on continue avec 2^(k+1) * B
             libereBigBinary(&B_decale);
             B_decale = B_double;
-            k++;
         }
 
         // Maintenant, on a 2^k * B <= reste < 2^(k+1) * B
@@ -528,8 +526,8 @@ BigBinary multiplicationMod(BigBinary A, BigBinary B, BigBinary n) {
     BigBinary resultat = creerZero();
     BigBinary base = Modulo(A, n);  // Réduire A modulo n d'abord
 
-    // Parcourir chaque bit de B
-    for (int i = B.Taille - 1; i >= 0; i--) {
+    // Parcourir chaque bit de B du MSB (index 0) au LSB (index Taille-1)
+    for (int i = 0; i < B.Taille; i++) {
         // resultat = (resultat * 2) mod n
         BigBinary temp = multiplePar2(resultat);
         libereBigBinary(&resultat);
