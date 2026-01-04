@@ -440,6 +440,89 @@ BigBinary Modulo(BigBinary A, BigBinary B) {
     return reste;
 }
 
+// Division Euclidienne : calcule quotient et reste tels que A = quotient * B + reste
+// Algorithme "division-free" basé sur l'antiphérèse (même principe que Modulo)
+// On calcule le quotient bit par bit en accumulant les puissances de 2
+DivisionResult DivisionEuclidienne(BigBinary A, BigBinary B) {
+    DivisionResult result;
+
+    // Cas spécial : division par zéro
+    if (estNul(B)) {
+        fprintf(stderr, "Erreur: Division par zéro dans DivisionEuclidienne\n");
+        result.quotient = creerZero();
+        result.reste = creerZero();
+        return result;
+    }
+
+    // Cas spécial : A < B → quotient = 0, reste = A
+    if (Inferieur(A, B)) {
+        result.quotient = creerZero();
+        result.reste = copieBigBinary(A);
+        return result;
+    }
+
+    // Cas spécial : A == B → quotient = 1, reste = 0
+    if (Egal(A, B)) {
+        result.quotient = creerBigBinaryDepuisChaine("1");
+        result.reste = creerZero();
+        return result;
+    }
+
+    // Algorithme principal : on soustrait des multiples de 2^k * B
+    // et on accumule 2^k dans le quotient
+    BigBinary reste = copieBigBinary(A);
+    BigBinary quotient = creerZero();
+
+    // Tant que reste >= B
+    while (!Inferieur(reste, B)) {
+        // Trouver le plus grand k tel que 2^k * B <= reste < 2^(k+1) * B
+        BigBinary B_decale = copieBigBinary(B);
+        BigBinary puissance2 = creerBigBinaryDepuisChaine("1");  // = 2^0
+
+        while (true) {
+            BigBinary B_double = multiplePar2(B_decale);
+
+            // Si 2^(k+1) * B > reste, on s'arrête
+            if (Superieur(B_double, reste)) {
+                libereBigBinary(&B_double);
+                break;
+            }
+
+            // Sinon, on continue avec 2^(k+1) * B
+            libereBigBinary(&B_decale);
+            B_decale = B_double;
+
+            // puissance2 *= 2
+            BigBinary p2 = multiplePar2(puissance2);
+            libereBigBinary(&puissance2);
+            puissance2 = p2;
+        }
+
+        // Soustraire 2^k * B du reste
+        BigBinary nouveau_reste = Soustraction(reste, B_decale);
+        libereBigBinary(&reste);
+        reste = nouveau_reste;
+
+        // Ajouter 2^k au quotient
+        BigBinary nouveau_quotient = Addition(quotient, puissance2);
+        libereBigBinary(&quotient);
+        quotient = nouveau_quotient;
+
+        libereBigBinary(&B_decale);
+        libereBigBinary(&puissance2);
+    }
+
+    result.quotient = quotient;
+    result.reste = reste;
+    return result;
+}
+
+// Libération de la mémoire d'un DivisionResult
+void libereDivisionResult(DivisionResult *res) {
+    libereBigBinary(&res->quotient);
+    libereBigBinary(&res->reste);
+}
+
 // Exponentiation modulaire : M^exp mod n
 BigBinary ExpMod(BigBinary M, BigBinary exp, BigBinary n) {
     // Si l'exposant est 0, retourner 1

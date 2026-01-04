@@ -78,6 +78,18 @@ BigBinary PGCD(BigBinary A, BigBinary B);
 // Calcul du modulo : A mod B
 BigBinary Modulo(BigBinary A, BigBinary B);
 
+// Structure pour le résultat de la Division Euclidienne
+typedef struct {
+    BigBinary quotient;
+    BigBinary reste;
+} DivisionResult;
+
+// Division Euclidienne : calcule quotient et reste tels que A = quotient * B + reste
+DivisionResult DivisionEuclidienne(BigBinary A, BigBinary B);
+
+// Libération de la mémoire d'un DivisionResult
+void libereDivisionResult(DivisionResult *res);
+
 // Exponentiation modulaire : M^exp mod n
 // exp est passé comme BigBinary mais peut être simplifié en int si < 64 bits
 BigBinary ExpMod(BigBinary M, BigBinary exp, BigBinary n);

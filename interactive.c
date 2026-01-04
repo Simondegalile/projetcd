@@ -19,6 +19,7 @@ void affiche_menu() {
     printf("  7. RSA Chiffrement (M^e mod n)\n");
     printf("  8. RSA Déchiffrement (C^d mod n)\n");
     printf("  9. Comparer (A < B, A == B)\n");
+    printf("  10. Division Euclidienne (A ÷ B → quotient et reste)\n");
     printf("  0. Quitter\n");
     printf("\nVotre choix: ");
 }
@@ -284,6 +285,52 @@ void test_comparaison() {
     libereBigBinary(&B);
 }
 
+void test_division_euclidienne() {
+    char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE];
+
+    printf("\n=== DIVISION EUCLIDIENNE ===\n");
+    printf("Calcule quotient et reste tels que A = quotient × B + reste\n\n");
+    lire_binaire(buffer1, BUFFER_SIZE, "Entrez A (binaire): ");
+    lire_binaire(buffer2, BUFFER_SIZE, "Entrez B (binaire, B != 0): ");
+
+    BigBinary A = creerBigBinaryDepuisChaine(buffer1);
+    BigBinary B = creerBigBinaryDepuisChaine(buffer2);
+
+    if (estNul(B)) {
+        printf("\nERREUR: Division par zéro!\n");
+    } else {
+        printf("\nA = ");
+        afficheBigBinary(A);
+        printf("B = ");
+        afficheBigBinary(B);
+
+        DivisionResult res = DivisionEuclidienne(A, B);
+
+        printf("\nRésultat:\n");
+        printf("Quotient = ");
+        afficheBigBinary(res.quotient);
+        printf("Reste    = ");
+        afficheBigBinary(res.reste);
+
+        // Vérification: A = quotient * B + reste
+        printf("\nVérification (quotient × B + reste):\n");
+        BigBinary produit = MultiplicationEgyptienne(res.quotient, B);
+        BigBinary verification = Addition(produit, res.reste);
+        printf("quotient × B + reste = ");
+        afficheBigBinary(verification);
+        printf("A original           = ");
+        afficheBigBinary(A);
+        printf("Égalité: %s\n", Egal(A, verification) ? "OUI ✓" : "NON ✗");
+
+        libereBigBinary(&produit);
+        libereBigBinary(&verification);
+        libereDivisionResult(&res);
+    }
+
+    libereBigBinary(&A);
+    libereBigBinary(&B);
+}
+
 void tester_avec_exemples() {
     printf("\n=== TESTS PRÉDÉFINIS ===\n");
     printf("\n1. Addition: 1010 + 110 = 10000 (10 + 6 = 16)\n");
@@ -366,6 +413,9 @@ int main() {
                 test_comparaison();
                 break;
             case 10:
+                test_division_euclidienne();
+                break;
+            case 11:
                 tester_avec_exemples();
                 break;
             case 0:
