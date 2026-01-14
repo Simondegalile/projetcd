@@ -23,6 +23,9 @@ BigBinary initBigBinary(int taille, int signe);
 // Création d'un BigBinary depuis une chaîne binaire
 BigBinary creerBigBinaryDepuisChaine(const char *chaine);
 
+// Création d'un BigBinary depuis un entier décimal (long long)
+BigBinary creerBigBinaryDepuisDecimal(long long nombre);
+
 // Création d'un BigBinary représentant zéro
 BigBinary creerZero();
 
